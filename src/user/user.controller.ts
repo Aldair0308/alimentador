@@ -1,34 +1,41 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { User } from './schema/user.schema';
 
-@Controller('user')
+@Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  // Crear un nuevo usuario
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+  async createUser(@Body() body: { name: string; email: string; password: string }): Promise<User> {
+    return this.userService.createUser(body.name, body.email, body.password);
   }
 
+  // Obtener todos los usuarios
   @Get()
-  findAll() {
+  async getAllUsers(): Promise<User[]> {
     return this.userService.findAll();
   }
 
+  // Obtener un usuario por su ID
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
+  async getUserById(@Param('id') id: string): Promise<User> {
+    return this.userService.findById(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
+  // Actualizar un usuario por su ID
+  @Put(':id')
+  async updateUser(
+    @Param('id') id: string,
+    @Body() body: { name?: string; email?: string; password?: string },
+  ): Promise<User> {
+    return this.userService.updateUser(id, body);
   }
 
+  // Eliminar un usuario por su ID
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+  async deleteUser(@Param('id') id: string): Promise<User> {
+    return this.userService.deleteUser(id);
   }
 }

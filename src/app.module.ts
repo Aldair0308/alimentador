@@ -1,19 +1,11 @@
 import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
 import { UserModule } from './user/user.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [
     UserModule,
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: 'autorack.proxy.rlwy.net',
-      password: 'eheheNHJXjKiixlcqNzBNRTxwmVcokDA',
-      username: 'root',
-      database: 'railway',
-      port: 37407,
-
-    })
+    MongooseModule.forRoot('mongodb://mongo:kYNgYYjSUWFsFHEVKQSrSjZkcxNZzkkX@autorack.proxy.rlwy.net:50056')
   ],
   controllers: [],
   providers: [],
