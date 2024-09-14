@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Query, NotFoundException } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './schema/user.schema';
 
@@ -28,7 +28,7 @@ export class UserController {
   @Get('email')
   async getUserByEmail(@Query('email') email: string): Promise<User> {
     if (!email) {
-      throw new Error('Email query parameter is required');
+      throw new NotFoundException('Email query parameter is required');
     }
     return this.userService.findOneByEmail(email);
   }
