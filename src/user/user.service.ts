@@ -27,6 +27,15 @@ export class UserService {
     return user;
   }
 
+  // Obtener un usuario por su correo electrónico
+  async findOneByEmail(email: string): Promise<User> {
+    const user = await this.userModel.findOne({ email }).exec();
+    if (!user) {
+      throw new NotFoundException(`User with email ${email} not found`);
+    }
+    return user;
+  }
+
   // Actualizar un usuario por su ID
   async updateUser(id: string, updateData: Partial<User>): Promise<User> {
     const updatedUser = await this.userModel.findByIdAndUpdate(id, updateData, { new: true }).exec();

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './schema/user.schema';
 
@@ -22,6 +22,15 @@ export class UserController {
   @Get(':id')
   async getUserById(@Param('id') id: string): Promise<User> {
     return this.userService.findById(id);
+  }
+
+  // Obtener un usuario por su correo electrónico
+  @Get('email')
+  async getUserByEmail(@Query('email') email: string): Promise<User> {
+    if (!email) {
+      throw new Error('Email query parameter is required');
+    }
+    return this.userService.findOneByEmail(email);
   }
 
   // Actualizar un usuario por su ID
