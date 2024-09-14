@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './schema/user.schema';
@@ -9,48 +9,72 @@ export class UserService {
 
   // Crear un nuevo usuario
   async createUser(name: string, email: string, password: string): Promise<User> {
-    const newUser = new this.userModel({ name, email, password });
-    return newUser.save();
+    try {
+      const newUser = new this.userModel({ name, email, password });
+      return await newUser.save();
+    } catch (error) {
+      throw new InternalServerErrorException('Error creating user');
+    }
   }
 
   // Obtener todos los usuarios
   async findAll(): Promise<User[]> {
-    return this.userModel.find().exec();
+    try {
+      return await this.userModel.find().exec();
+    } catch (error) {
+      throw new InternalServerErrorException('Error fetching users');
+    }
   }
 
   // Obtener un usuario por su ID
   async findById(id: string): Promise<User> {
-    const user = await this.userModel.findById(id).exec();
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+    try {
+      const user = await this.userModel.findById(id).exec();
+      if (!user) {
+        throw new NotFoundException(`User with ID ${id} not found`);
+      }
+      return user;
+    } catch (error) {
+      throw new InternalServerErrorException('Error fetching user by ID');
     }
-    return user;
   }
 
   // Obtener un usuario por su correo electrónico
   async findOneByEmail(email: string): Promise<User> {
-    const user = await this.userModel.findOne({ email }).exec();
-    if (!user) {
-      throw new NotFoundException(`User with email ${email} not found`);
+    try {
+      const user = await this.userModel.findOne({ email }).exec();
+      if (!user) {
+        throw new NotFoundException(`User with email ${email} not found`);
+      }
+      return user;
+    } catch (error) {
+      throw new InternalServerErrorException('Error fetching user by email');
     }
-    return user;
   }
 
   // Actualizar un usuario por su ID
   async updateUser(id: string, updateData: Partial<User>): Promise<User> {
-    const updatedUser = await this.userModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
-    if (!updatedUser) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+    try {
+      const updatedUser = await this.userModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
+      if (!updatedUser) {
+        throw new NotFoundException(`User with ID ${id} not found`);
+      }
+      return updatedUser;
+    } catch (error) {
+      throw new InternalServerErrorException('Error updating user');
     }
-    return updatedUser;
   }
 
   // Eliminar un usuario por su ID
   async deleteUser(id: string): Promise<User> {
-    const deletedUser = await this.userModel.findByIdAndDelete(id).exec();
-    if (!deletedUser) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+    try {
+      const deletedUser = await this.userModel.findByIdAndDelete(id).exec();
+      if (!deletedUser) {
+        throw new NotFoundException(`User with ID ${id} not found`);
+      }
+      return deletedUser;
+    } catch (error) {
+      throw new InternalServerErrorException('Error deleting user');
     }
-    return deletedUser;
   }
 }
