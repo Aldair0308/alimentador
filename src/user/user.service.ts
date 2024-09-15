@@ -19,6 +19,7 @@ export class UserService {
       const newUser = new this.userModel({ name, email, password });
       return await newUser.save();
     } catch (error) {
+      console.error('Error in UserService.createUser:', error); // Imprimir el error en la consola para depuración
       throw new InternalServerErrorException('Error creating user');
     }
   }

@@ -31,7 +31,8 @@ export class AuthService {
         password: await bcrypt.hash(password, 10),
       });
     } catch (error) {
-      // Maneja errores aquí
+      // Imprimir el error en la consola para depuración
+      console.error('Error in AuthService.register:', error);
       throw new InternalServerErrorException('Error registering user');
     }
   }
@@ -53,7 +54,8 @@ export class AuthService {
 
       return { accessToken };
     } catch (error) {
-      // Maneja errores aquí
+      // Imprimir el error en la consola para depuración
+      console.error('Error in AuthService.login:', error);
       throw new InternalServerErrorException('Error logging in user');
     }
   }
