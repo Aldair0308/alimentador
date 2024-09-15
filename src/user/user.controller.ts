@@ -19,7 +19,7 @@ export class UserController {
   }
 
   // Obtener un usuario por su ID
-  @Get(':id')
+  @Get('id/:id')
   async getUserById(@Param('id') id: string): Promise<User> {
     return this.userService.findById(id);
   }
@@ -34,7 +34,7 @@ export class UserController {
   }
 
   // Actualizar un usuario por su ID
-  @Put(':id')
+  @Put('id/:id')
   async updateUser(
     @Param('id') id: string,
     @Body() body: { name?: string; email?: string; password?: string },
@@ -43,7 +43,7 @@ export class UserController {
   }
 
   // Eliminar un usuario por su ID
-  @Delete(':id')
+  @Delete('id/:id')
   async deleteUser(@Param('id') id: string): Promise<User> {
     return this.userService.deleteUser(id);
   }
