@@ -1,15 +1,21 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './schema/user.schema';
+import { CreateUserDto } from './dto/create-user.dto'; // Asegúrate de que la ruta sea correcta
 
 @Injectable()
 export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
   // Crear un nuevo usuario
-  async createUser(name: string, email: string, password: string): Promise<User> {
+  async createUser(createUserDto: CreateUserDto): Promise<User> {
     try {
+      const { name, email, password } = createUserDto;
       const newUser = new this.userModel({ name, email, password });
       return await newUser.save();
     } catch (error) {
@@ -55,7 +61,9 @@ export class UserService {
   // Actualizar un usuario por su ID
   async updateUser(id: string, updateData: Partial<User>): Promise<User> {
     try {
-      const updatedUser = await this.userModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
+      const updatedUser = await this.userModel
+        .findByIdAndUpdate(id, updateData, { new: true })
+        .exec();
       if (!updatedUser) {
         throw new NotFoundException(`User with ID ${id} not found`);
       }
