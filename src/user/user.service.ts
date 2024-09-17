@@ -47,14 +47,12 @@ export class UserService {
   }
 
   // Obtener un usuario por su correo electrónico
-  async findOneByEmail(email: string): Promise<User> {
+  async findOneByEmail(email: string): Promise<User | null> {
     try {
-      const user = await this.userModel.findOne({ email }).exec();
-      if (!user) {
-        throw new NotFoundException(`User with email ${email} not found`);
-      }
-      return user;
+      return await this.userModel.findOne({ email }).exec();
     } catch (error) {
+      // Imprimir el error en la consola para depuración
+      console.error('Error fetching user by email:', error);
       throw new InternalServerErrorException('Error fetching user by email');
     }
   }
