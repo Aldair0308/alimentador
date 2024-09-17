@@ -52,7 +52,7 @@ export class AuthService {
       const payload = { email: user.email, sub: user._id };
       const accessToken = this.jwtService.sign(payload);
 
-      return { accessToken };
+      return { accessToken, user };
     } catch (error) {
       // Imprimir el error en la consola para depuración
       console.error('Error in AuthService.login:', error);
