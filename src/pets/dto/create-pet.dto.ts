@@ -1,4 +1,10 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+} from 'class-validator';
 
 export class CreatePetDto {
   @IsNotEmpty()
@@ -17,7 +23,7 @@ export class CreatePetDto {
   @IsNumber()
   gramos: number;
 
-  @IsNotEmpty()
-  @IsString() // Puedes usar validaciones adicionales para el formato de hora
-  hora: string;
+  @IsArray()
+  @IsString({ each: true }) // Valida que cada elemento del arreglo sea un string
+  horas: string[];
 }

@@ -20,8 +20,8 @@ export class Pet {
   @Prop({ required: true })
   gramos: number;
 
-  @Prop({ required: true })
-  hora: string; // Asegúrate de validar el formato de hora al recibir este campo
+  @Prop({ required: true, type: [String] }) // Actualizado para permitir un arreglo de strings
+  horas: string[];
 }
 
 export const PetSchema = SchemaFactory.createForClass(Pet);
