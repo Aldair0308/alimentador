@@ -10,6 +10,10 @@ import {
 export class CreatePetDto {
   @IsNotEmpty()
   @IsString()
+  foto: string;
+
+  @IsNotEmpty()
+  @IsString()
   nombre: string;
 
   @IsNotEmpty()

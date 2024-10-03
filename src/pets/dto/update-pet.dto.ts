@@ -10,6 +10,10 @@ import {
 export class UpdatePetDto {
   @IsOptional()
   @IsString()
+  foto?: string;
+
+  @IsOptional()
+  @IsString()
   nombre?: string;
 
   @IsOptional()

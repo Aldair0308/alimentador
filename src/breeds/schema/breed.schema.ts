@@ -1,16 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-export type PetDocument = Pet & Document;
+export type BreedDocument = Breed & Document;
 
 @Schema()
-export class Pet {
-  @Prop({ required: true })
-  foto: string;
-
-  @Prop({ required: true })
-  nombre: string;
-
+export class Breed {
   @Prop({ required: true })
   raza: string;
 
@@ -19,6 +13,15 @@ export class Pet {
     enum: ['pequeño', 'mediano', 'grande'],
   })
   categoria: string;
+
+  @Prop({ required: true })
+  tamaño: string;
+
+  @Prop({ required: true })
+  vida: string;
+
+  @Prop({ required: true })
+  peso: string;
 
   @Prop({ required: true })
   gramos: number;
@@ -36,7 +39,10 @@ export class Pet {
   sexo: string;
 
   @Prop({ required: true })
-  nacimiento: string;
+  info: string;
+
+  @Prop() // Este campo es opcional
+  foto?: string; // Campo para la URL de la foto
 }
 
-export const PetSchema = SchemaFactory.createForClass(Pet);
+export const BreedSchema = SchemaFactory.createForClass(Breed);

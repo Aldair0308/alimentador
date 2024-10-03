@@ -4,6 +4,7 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { PetsModule } from './pets/pets.module';
 import { DistanceModule } from './distance/distance.module';
+import { BreedsModule } from './breeds/breeds.module';
 
 @Module({
   imports: [
@@ -11,7 +12,8 @@ import { DistanceModule } from './distance/distance.module';
     MongooseModule.forRoot('mongodb://mongo:kYNgYYjSUWFsFHEVKQSrSjZkcxNZzkkX@autorack.proxy.rlwy.net:50056'),
     AuthModule,
     PetsModule,
-    DistanceModule
+    DistanceModule,
+    BreedsModule
   ],
   controllers: [],
   providers: [],
