@@ -15,13 +15,25 @@ export class Pet {
     required: true,
     enum: ['pequeño', 'mediano', 'grande'],
   })
-  tamaño: string;
+  categoria: string;
 
   @Prop({ required: true })
   gramos: number;
 
+  @Prop({ required: true })
+  veces: number;
+
+  @Prop({ required: true })
+  porcion: number;
+
   @Prop({ required: true, type: [String] }) // Actualizado para permitir un arreglo de strings
   horas: string[];
+
+  @Prop({ required: true })
+  sexo: string;
+
+  @Prop({ required: true })
+  nacimiento: string;
 }
 
 export const PetSchema = SchemaFactory.createForClass(Pet);
