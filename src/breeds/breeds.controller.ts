@@ -9,9 +9,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { BreedsService } from './breeds.service';
-import { CreateBreedDto } from './dto/create-breed.dto'; // Asegúrate de crear este DTO
-import { UpdateBreedDto } from './dto/update-breed.dto'; // Asegúrate de crear este DTO
-import { Breed } from './schema/breed.schema'; // Asegúrate de que esta ruta sea correcta
+import { CreateBreedDto } from './dto/create-breed.dto';
+import { UpdateBreedDto } from './dto/update-breed.dto';
+import { Breed } from './schema/breed.schema';
 
 @Controller('breeds')
 export class BreedsController {
@@ -34,6 +34,17 @@ export class BreedsController {
       throw new NotFoundException(`Breed with ID ${id} not found`);
     }
     return breed;
+  }
+
+  @Get('category/:categoria') // Nueva ruta para obtener razas por categoría
+  async findByCategory(
+    @Param('categoria') categoria: string,
+  ): Promise<Breed[]> {
+    const breeds = await this.breedsService.findByCategory(categoria);
+    if (!breeds || breeds.length === 0) {
+      throw new NotFoundException(`No breeds found for category ${categoria}`);
+    }
+    return breeds;
   }
 
   @Put(':id')

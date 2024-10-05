@@ -2,8 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Breed, BreedDocument } from './schema/breed.schema';
-import { CreateBreedDto } from './dto/create-breed.dto'; // Asegúrate de crear este DTO
-import { UpdateBreedDto } from './dto/update-breed.dto'; // Asegúrate de crear este DTO
+import { CreateBreedDto } from './dto/create-breed.dto';
+import { UpdateBreedDto } from './dto/update-breed.dto';
 
 @Injectable()
 export class BreedsService {
@@ -26,6 +26,10 @@ export class BreedsService {
       throw new NotFoundException(`Breed with ID ${id} not found`);
     }
     return breed;
+  }
+
+  async findByCategory(categoria: string): Promise<Breed[]> {
+    return this.breedModel.find({ categoria }).exec(); // Filtra por categoría
   }
 
   async update(id: string, updateBreedDto: UpdateBreedDto): Promise<Breed> {
