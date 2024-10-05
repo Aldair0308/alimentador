@@ -36,9 +36,6 @@ export class Breed {
   horas: string[];
 
   @Prop({ required: true })
-  sexo: string;
-
-  @Prop({ required: true })
   info: string;
 
   @Prop() // Este campo es opcional
