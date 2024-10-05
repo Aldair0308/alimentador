@@ -10,7 +10,7 @@ export class Breed {
 
   @Prop({
     required: true,
-    enum: ['pequeño', 'mediano', 'grande'],
+    enum: ['chico', 'mediano', 'grande'],
   })
   categoria: string;
 
