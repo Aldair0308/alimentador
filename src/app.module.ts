@@ -9,11 +9,13 @@ import { BreedsModule } from './breeds/breeds.module';
 @Module({
   imports: [
     UserModule,
-    MongooseModule.forRoot('mongodb://mongo:kYNgYYjSUWFsFHEVKQSrSjZkcxNZzkkX@autorack.proxy.rlwy.net:50056'),
+    MongooseModule.forRoot(
+      'mongodb://mongo:lnqdpVcEibwypvXTzIDvtsajlNzDethu@junction.proxy.rlwy.net:25944',
+    ),
     AuthModule,
     PetsModule,
     DistanceModule,
-    BreedsModule
+    BreedsModule,
   ],
   controllers: [],
   providers: [],
