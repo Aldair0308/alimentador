@@ -32,14 +32,14 @@ export class Breed {
   @Prop({ required: true })
   porcion: number;
 
-  @Prop({ required: true, type: [String] }) // Actualizado para permitir un arreglo de strings
+  @Prop({ required: true, type: [String] })
   horas: string[];
 
   @Prop({ required: true })
   info: string;
 
-  @Prop() // Este campo es opcional
-  foto?: string; // Campo para la URL de la foto
+  @Prop()
+  foto?: string;
 }
 
 export const BreedSchema = SchemaFactory.createForClass(Breed);

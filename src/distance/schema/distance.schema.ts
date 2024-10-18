@@ -11,6 +11,9 @@ export class Distancia extends Document {
 
   @Prop({ required: true, default: Date.now })
   fecha: Date;
+
+  @Prop({ default: 'cerrado' })
+  estado: string;
 }
 
 export const DistanciaSchema = SchemaFactory.createForClass(Distancia);

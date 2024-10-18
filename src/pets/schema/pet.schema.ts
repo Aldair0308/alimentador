@@ -6,9 +6,6 @@ export type PetDocument = Pet & Document;
 @Schema()
 export class Pet {
   @Prop({ required: true })
-  foto: string;
-
-  @Prop({ required: true })
   nombre: string;
 
   @Prop({ required: true })
@@ -29,14 +26,11 @@ export class Pet {
   @Prop({ required: true })
   porcion: number;
 
-  @Prop({ required: true, type: [String] }) // Actualizado para permitir un arreglo de strings
+  @Prop({ required: true, type: [String] })
   horas: string[];
 
   @Prop({ required: true })
-  sexo: string;
-
-  @Prop({ required: true })
-  nacimiento: string;
+  edad: string;
 }
 
 export const PetSchema = SchemaFactory.createForClass(Pet);
