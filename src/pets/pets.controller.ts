@@ -27,6 +27,11 @@ export class PetsController {
     return this.petsService.findAll();
   }
 
+  @Get('last') // Esta línea debe estar antes de la ruta con :id
+  async findLast(): Promise<Pet> {
+    return this.petsService.findLast();
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<Pet> {
     const pet = await this.petsService.findById(id);

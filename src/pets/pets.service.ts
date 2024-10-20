@@ -43,4 +43,15 @@ export class PetsService {
     }
     return deletedPet;
   }
+
+  async findLast(): Promise<Pet> {
+    const lastPet = await this.petModel
+      .findOne()
+      .sort({ _id: -1 }) // Ordena por _id en orden descendente
+      .exec();
+    if (!lastPet) {
+      throw new NotFoundException('No pets found');
+    }
+    return lastPet;
+  }
 }
