@@ -71,4 +71,20 @@ export class UserController {
     }
     return deletedUser;
   }
+
+  @Put('change-password/:id')
+  async changePassword(
+    @Param('id') id: string,
+    @Body() body: { oldPassword: string; newPassword: string },
+  ): Promise<User> {
+    const updatedUser = await this.userService.changePassword(
+      id,
+      body.oldPassword,
+      body.newPassword,
+    );
+    if (!updatedUser) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    return updatedUser;
+  }
 }

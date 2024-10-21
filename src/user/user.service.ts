@@ -7,6 +7,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './schema/user.schema';
 import { CreateUserDto } from './dto/create-user.dto'; // Asegúrate de que la ruta sea correcta
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -83,5 +84,41 @@ export class UserService {
     } catch (error) {
       throw new InternalServerErrorException('Error deleting user');
     }
+  }
+
+  // Cambiar la contraseña de un usuario
+  async changePassword(
+    id: string,
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<User> {
+    try {
+      const user = await this.userModel.findById(id).exec();
+      if (!user) {
+        throw new NotFoundException(`User with ID ${id} not found`);
+      }
+
+      // Verificar la contraseña
+      const isMatch = await this.verifyPassword(oldPassword, user.password);
+      if (!isMatch) {
+        throw new Error('Old password is incorrect');
+      }
+
+      // Hashear la nueva contraseña
+      user.password = await bcrypt.hash(newPassword, 10);
+      await user.save();
+      return user;
+    } catch (error) {
+      console.error('Error changing password:', error);
+      throw new InternalServerErrorException('Error changing password');
+    }
+  }
+
+  // Método para verificar la contraseña
+  private async verifyPassword(
+    plainPassword: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
+    return await bcrypt.compare(plainPassword, hashedPassword);
   }
 }
