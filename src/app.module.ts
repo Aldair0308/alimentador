@@ -10,7 +10,7 @@
 //   imports: [
 //     UserModule,
 //     MongooseModule.forRoot(
-//       'mongodb://mongo:lnqdpVcEibwypvXTzIDvtsajlNzDethu@junction.proxy.rlwy.net:25944',
+//       'mongodb://mongo:kRIrfumgVDkjEokSwgzoyrxvfhetWndI@junction.proxy.rlwy.net:36463',
 //     ),
 //     AuthModule,
 //     PetsModule,
