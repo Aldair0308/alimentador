@@ -59,13 +59,31 @@ export class DistanciaService {
     return this.distanciaModel.findByIdAndDelete(id).exec();
   }
 
-  async findLast(): Promise<{ porcentaje: number }> {
+  async findLast(): Promise<{ porcentaje: number; estado: string | null }> {
     const lastDistancia = await this.distanciaModel
       .findOne()
       .sort({ fecha: -1 })
       .exec();
 
-    console.log('Última distancia:', lastDistancia); // Agregar este log
-    return { porcentaje: lastDistancia ? lastDistancia.porcentaje : null };
+    console.log('Última distancia:', lastDistancia); // Log para depuración
+
+    return {
+      porcentaje: lastDistancia ? lastDistancia.porcentaje : null,
+      estado: lastDistancia ? lastDistancia.estado : null, // Incluye el estado
+    };
+  }
+
+  async updateLastState(estado: string): Promise<Distancia | null> {
+    const lastDistancia = await this.distanciaModel
+      .findOne()
+      .sort({ fecha: -1 })
+      .exec();
+
+    if (!lastDistancia) {
+      return null; // No hay registros
+    }
+
+    lastDistancia.estado = estado; // Actualiza el estado
+    return lastDistancia.save(); // Guarda el registro actualizado
   }
 }

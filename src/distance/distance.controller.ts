@@ -48,4 +48,19 @@ export class DistanciaController {
   async remove(@Param('id') id: string): Promise<Distancia> {
     return this.distanciaService.remove(id);
   }
+
+  @Post('update-last-state')
+  async updateLastState(
+    @Body() body: { estado: string },
+  ): Promise<{ message: string }> {
+    const updatedRecord = await this.distanciaService.updateLastState(
+      body.estado,
+    );
+    if (!updatedRecord) {
+      return { message: 'No hay registros disponibles para actualizar.' };
+    }
+    return {
+      message: `Estado del último registro actualizado a "${body.estado}"`,
+    };
+  }
 }

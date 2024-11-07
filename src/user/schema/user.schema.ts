@@ -15,8 +15,8 @@ export class User extends Document {
   @Prop({ default: 'photo_user.jpg' })
   photo: string;
 
-  @Prop({ default: 'user' })
-  rol: string;
+  @Prop({ default: '' })
+  pushToken: string;
 
   @Prop({ default: Date.now })
   createdAt: Date;
