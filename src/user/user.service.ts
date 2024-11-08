@@ -8,10 +8,14 @@ import { Model } from 'mongoose';
 import { User } from './schema/user.schema';
 import { CreateUserDto } from './dto/create-user.dto'; // Asegúrate de que la ruta sea correcta
 import * as bcrypt from 'bcrypt';
+import * as nodeCron from 'node-cron'; // Importamos node-cron
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(@InjectModel(User.name) private userModel: Model<User>) {
+    // Llamamos al método para obtener las horas y programar los cron jobs
+    this.scheduleNotificationsBasedOnPetHours();
+  }
 
   // Crear un nuevo usuario
   async createUser(createUserDto: CreateUserDto): Promise<User> {
@@ -120,5 +124,114 @@ export class UserService {
     hashedPassword: string,
   ): Promise<boolean> {
     return await bcrypt.compare(plainPassword, hashedPassword);
+  }
+
+  // Método para programar las notificaciones basado en las horas obtenidas de la API
+  private async scheduleNotificationsBasedOnPetHours() {
+    try {
+      // Hacemos la solicitud GET a tu API para obtener las horas de la mascota
+      const response = await fetch('http://192.168.100.169:3000/pets/last');
+
+      // Verificamos si la respuesta fue exitosa
+      if (!response.ok) {
+        throw new Error('Failed to fetch pet hours');
+      }
+
+      const petData = await response.json();
+      console.log('Pet data:', petData); // Log para depuración
+
+      // Si no hay horas en la respuesta, lanzamos un error
+      if (!petData.horas || petData.horas.length === 0) {
+        throw new Error('No hours found for pet');
+      }
+
+      // Iteramos sobre las horas que nos devuelve la API
+      petData.horas.forEach((hora: string) => {
+        // Programamos un cron job para cada hora en el array "horas"
+        const cronExpression = this.convertToCronExpression(hora);
+
+        nodeCron.schedule(
+          cronExpression,
+          () => {
+            console.log(`Enviando notificación a las ${hora}`);
+            this.sendNotificationToAllUsers(); // Enviamos la notificación
+          },
+          {
+            timeZone: 'America/Mexico_City', // Usamos la zona horaria de CDMX
+          },
+        );
+      });
+    } catch (error) {
+      console.error('Error al obtener las horas de la API:', error);
+      throw new InternalServerErrorException(
+        'Error al obtener las horas para programar las notificaciones',
+      );
+    }
+  }
+
+  // Convertir la hora en formato "HH:MM" a una expresión cron
+  private convertToCronExpression(hora: string): string {
+    const [hour, minute] = hora.split(':');
+    return `${minute} ${hour} * * *`; // Cron para "minuto hora * * *"
+  }
+
+  // Método para enviar una notificación a todos los usuarios
+  private async sendNotificationToAllUsers(): Promise<void> {
+    try {
+      const users = await this.userModel
+        .find({ pushToken: { $ne: '' } })
+        .exec();
+      const message = '¡Tienes una nueva notificación automática!';
+
+      // Enviar la notificación a cada usuario
+      for (const user of users) {
+        const pushToken = user.pushToken;
+        await this.sendPushNotification(pushToken, message);
+      }
+    } catch (error) {
+      console.error('Error al enviar las notificaciones:', error);
+      throw new InternalServerErrorException(
+        'Error enviando las notificaciones',
+      );
+    }
+  }
+
+  // Método para enviar una notificación push
+  private async sendPushNotification(pushToken: string, message: string) {
+    const messagePayload = {
+      to: pushToken,
+      sound: 'default',
+      title: 'Notificación Automática',
+      body: message,
+      data: {
+        messageType: 'reminder',
+      },
+      android: {
+        icon: './assets/icon.png',
+        color: '#FF231F7C',
+      },
+      ios: {
+        icon: './assets/icon.png',
+      },
+    };
+
+    try {
+      const response = await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(messagePayload),
+      });
+
+      const responseJson = await response.json();
+      if (responseJson.data) {
+        console.log('Notificación enviada correctamente');
+      } else {
+        console.warn('Error al enviar notificación');
+      }
+    } catch (error) {
+      console.error('Error al enviar la notificación:', error);
+    }
   }
 }

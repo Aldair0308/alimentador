@@ -87,4 +87,17 @@ export class UserController {
     }
     return updatedUser;
   }
+
+  // Ruta para enviar una notificación a un usuario por su ID
+  // @Put('notification/:id')
+  // async sendNotificationToUser(@Param('id') id: string): Promise<string> {
+  //   try {
+  //     await this.userService.sendNotificationToUserById(id); // Invocamos el servicio
+  //     return `Notificación enviada al usuario con ID: ${id}`;
+  //   } catch (error) {
+  //     throw new NotFoundException(
+  //       `Error al enviar la notificación a usuario con ID ${id}`,
+  //     );
+  //   }
+  // }
 }
