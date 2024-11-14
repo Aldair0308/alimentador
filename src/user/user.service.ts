@@ -12,9 +12,13 @@ import * as nodeCron from 'node-cron'; // Importamos node-cron
 
 @Injectable()
 export class UserService {
+  // Propiedades para gestionar las horas programadas y los cron jobs
+  private petCronJobs: { [hora: string]: nodeCron.ScheduledTask[] } = {};
+  private lastScheduledHours: string = ''; // Guardamos las horas originales
+
   constructor(@InjectModel(User.name) private userModel: Model<User>) {
-    // Llamamos al método para obtener las horas y programar los cron jobs
-    this.scheduleNotificationsBasedOnPetHours();
+    // Llamamos al método para obtener las horas y programar los cron jobs cada 2 minutos
+    this.scheduleNotificationsEveryTwoMinutes();
   }
 
   // Crear un nuevo usuario
@@ -126,6 +130,14 @@ export class UserService {
     return await bcrypt.compare(plainPassword, hashedPassword);
   }
 
+  // Método para programar las notificaciones cada 2 minutos
+  private scheduleNotificationsEveryTwoMinutes() {
+    nodeCron.schedule('*/2 * * * *', async () => {
+      console.log('Consultando la API de horas cada 2 minutos...');
+      await this.scheduleNotificationsBasedOnPetHours();
+    });
+  }
+
   // Método para programar las notificaciones basado en las horas obtenidas de la API
   private async scheduleNotificationsBasedOnPetHours() {
     try {
@@ -145,28 +157,64 @@ export class UserService {
         throw new Error('No hours found for pet');
       }
 
-      // Iteramos sobre las horas que nos devuelve la API
-      petData.horas.forEach((hora: string) => {
-        // Programamos un cron job para cada hora en el array "horas"
-        const cronExpression = this.convertToCronExpression(hora);
+      // Comprobamos si las horas obtenidas son diferentes de las anteriores
+      const currentHours = petData.horas.join(',');
 
-        nodeCron.schedule(
-          cronExpression,
-          () => {
-            console.log(`Enviando notificación a las ${hora}`);
-            this.sendNotificationToAllUsers(); // Enviamos la notificación
-          },
-          {
-            timeZone: 'America/Mexico_City', // Usamos la zona horaria de CDMX
-          },
+      // Si las horas han cambiado, reprogramamos los cron jobs
+      if (currentHours !== this.lastScheduledHours) {
+        console.log(
+          'Las horas han cambiado, reprogramando las notificaciones...',
         );
-      });
+        this.reScheduleNotifications(petData.horas);
+      } else {
+        console.log(
+          'Las horas no han cambiado, manteniendo la programación actual.',
+        );
+      }
     } catch (error) {
       console.error('Error al obtener las horas de la API:', error);
       throw new InternalServerErrorException(
         'Error al obtener las horas para programar las notificaciones',
       );
     }
+  }
+
+  // Reprogramar las notificaciones
+  private reScheduleNotifications(hours: string[]) {
+    // Detenemos los cron jobs antiguos
+    this.stopPreviousCronJobs();
+
+    // Iteramos sobre las horas que nos devuelve la API
+    hours.forEach((hora: string) => {
+      const cronExpression = this.convertToCronExpression(hora);
+
+      // Programamos un cron job para cada hora en el array "horas"
+      const job = nodeCron.schedule(
+        cronExpression,
+        () => {
+          console.log(`Enviando notificación a las ${hora}`);
+          this.sendNotificationToAllUsers(); // Enviamos la notificación
+        },
+        {
+          timeZone: 'America/Mexico_City', // Usamos la zona horaria de CDMX
+        },
+      );
+
+      // Guardamos el cron job para futuras referencias
+      this.petCronJobs[hora] = this.petCronJobs[hora] || [];
+      this.petCronJobs[hora].push(job);
+    });
+
+    // Actualizamos las horas programadas
+    this.lastScheduledHours = hours.join(',');
+  }
+
+  // Detener los cron jobs antiguos
+  private stopPreviousCronJobs() {
+    for (const jobArray of Object.values(this.petCronJobs)) {
+      jobArray.forEach((job) => job.stop());
+    }
+    this.petCronJobs = {}; // Limpiamos los cron jobs previos
   }
 
   // Convertir la hora en formato "HH:MM" a una expresión cron
