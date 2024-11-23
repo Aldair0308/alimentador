@@ -59,13 +59,15 @@ export class DistanciaService {
     return this.distanciaModel.findByIdAndDelete(id).exec();
   }
 
-  async findLast(): Promise<{ porcentaje: number; estado: string | null }> {
+  async findLastByCode(
+    code: string,
+  ): Promise<{ porcentaje: number; estado: string | null }> {
     const lastDistancia = await this.distanciaModel
-      .findOne()
+      .findOne({ code })
       .sort({ fecha: -1 })
       .exec();
 
-    console.log('Última distancia:', lastDistancia); // Log para depuración
+    console.log('Última distancia con código:', lastDistancia); // Log para depuración
 
     return {
       porcentaje: lastDistancia ? lastDistancia.porcentaje : null,

@@ -24,8 +24,8 @@ export class UserService {
   // Crear un nuevo usuario
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     try {
-      const { name, email, password } = createUserDto;
-      const newUser = new this.userModel({ name, email, password });
+      const { name, email, password, code } = createUserDto;
+      const newUser = new this.userModel({ name, email, password, code });
       return await newUser.save();
     } catch (error) {
       console.error('Error in UserService.createUser:', error); // Imprimir el error en la consola para depuración
@@ -255,7 +255,7 @@ export class UserService {
         messageType: 'reminder',
       },
       android: {
-        icon: './assets/icon.png',
+        icon: './../../assets/icon.png',
         color: '#FF231F7C',
       },
       ios: {

@@ -29,6 +29,7 @@ import { AuthModule } from './auth/auth.module';
 import { PetsModule } from './pets/pets.module';
 import { DistanceModule } from './distance/distance.module';
 import { BreedsModule } from './breeds/breeds.module';
+import { DispenserModule } from './dispenser/dispenser.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { BreedsModule } from './breeds/breeds.module';
     PetsModule,
     DistanceModule,
     BreedsModule,
+    DispenserModule,
   ],
   controllers: [],
   providers: [],

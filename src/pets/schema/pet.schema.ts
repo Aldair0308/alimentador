@@ -31,6 +31,9 @@ export class Pet {
 
   @Prop({ required: true })
   edad: string;
+
+  @Prop({ required: true })
+  code: string;
 }
 
 export const PetSchema = SchemaFactory.createForClass(Pet);

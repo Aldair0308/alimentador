@@ -47,4 +47,8 @@ export class CreatePetDto {
   @IsNotEmpty()
   @IsString() // Cambiado a IsString, ya que el tipo de nacimiento es Date
   nacimiento: string; // Puedes usar un string ISO para la fecha
+
+  @IsNotEmpty()
+  @IsString()
+  code: string;
 }

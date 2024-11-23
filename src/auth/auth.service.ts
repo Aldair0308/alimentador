@@ -17,7 +17,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register({ name, email, password }: RegisterDto) {
+  async register({ name, email, password, code }: RegisterDto) {
     try {
       const existingUser = await this.usersService.findOneByEmail(email);
       if (existingUser) {
@@ -29,6 +29,7 @@ export class AuthService {
         name,
         email,
         password: await bcrypt.hash(password, 10),
+        code,
       });
     } catch (error) {
       // Imprimir el error en la consola para depuración

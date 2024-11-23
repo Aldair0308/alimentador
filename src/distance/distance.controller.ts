@@ -26,9 +26,11 @@ export class DistanciaController {
     return this.distanciaService.findAll();
   }
 
-  @Get('last') // Esta línea debe estar antes de la ruta con :id
-  async findLast(): Promise<{ porcentaje: number }> {
-    return this.distanciaService.findLast();
+  @Get('last/code/:code')
+  async findLastByCode(
+    @Param('code') code: string,
+  ): Promise<{ porcentaje: number }> {
+    return this.distanciaService.findLastByCode(code);
   }
 
   @Get(':id')

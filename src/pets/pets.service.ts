@@ -26,6 +26,14 @@ export class PetsService {
     return pet;
   }
 
+  async findByCode(code: string): Promise<Pet> {
+    const pet = await this.petModel.findOne({ code }).exec();
+    if (!pet) {
+      throw new NotFoundException(`Pet with code ${code} not found`);
+    }
+    return pet;
+  }
+
   async update(id: string, updatePetDto: UpdatePetDto): Promise<Pet> {
     const updatedPet = await this.petModel
       .findByIdAndUpdate(id, updatePetDto, { new: true })
@@ -44,13 +52,13 @@ export class PetsService {
     return deletedPet;
   }
 
-  async findLast(): Promise<Pet> {
+  async findLastByCode(code: string): Promise<Pet> {
     const lastPet = await this.petModel
-      .findOne()
+      .findOne({ code })
       .sort({ _id: -1 }) // Ordena por _id en orden descendente
       .exec();
     if (!lastPet) {
-      throw new NotFoundException('No pets found');
+      throw new NotFoundException(`No pets found for code ${code}`);
     }
     return lastPet;
   }

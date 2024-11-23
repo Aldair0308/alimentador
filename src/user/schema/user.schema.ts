@@ -23,6 +23,9 @@ export class User extends Document {
 
   @Prop({ default: Date.now })
   updatedAt: Date;
+
+  @Prop({ required: true })
+  code: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
