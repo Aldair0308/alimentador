@@ -13,6 +13,12 @@ export class Dispenser {
 
   @Prop({ required: true })
   code: string;
+
+  @Prop({ required: true })
+  wifi: string;
+
+  @Prop({ required: true })
+  password: string;
 }
 
 export const DispenserSchema = SchemaFactory.createForClass(Dispenser);
