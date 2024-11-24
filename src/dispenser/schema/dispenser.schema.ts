@@ -14,10 +14,10 @@ export class Dispenser {
   @Prop({ required: true })
   code: string;
 
-  @Prop({ required: true })
+  @Prop()
   wifi: string;
 
-  @Prop({ required: true })
+  @Prop()
   password: string;
 }
 

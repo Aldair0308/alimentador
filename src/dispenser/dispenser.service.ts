@@ -51,4 +51,12 @@ export class DispenserService {
     }
     return deletedDispenser;
   }
+
+  async findByCode(code: string): Promise<Dispenser> {
+    const dispenser = await this.dispenserModel.findOne({ code }).exec();
+    if (!dispenser) {
+      throw new NotFoundException(`Dispenser with code ${code} not found`);
+    }
+    return dispenser;
+  }
 }

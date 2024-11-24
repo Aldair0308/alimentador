@@ -28,6 +28,11 @@ export class DispenserController {
     return this.dispenserService.findAll();
   }
 
+  @Get('code/:code')
+  async findByCode(@Param('code') code: string): Promise<Dispenser> {
+    return this.dispenserService.findByCode(code);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<Dispenser> {
     return this.dispenserService.findOne(id);

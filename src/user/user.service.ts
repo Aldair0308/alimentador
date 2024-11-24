@@ -24,8 +24,8 @@ export class UserService {
   // Crear un nuevo usuario
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     try {
-      const { name, email, password, code } = createUserDto;
-      const newUser = new this.userModel({ name, email, password, code });
+      const { name, email, password } = createUserDto;
+      const newUser = new this.userModel({ name, email, password });
       return await newUser.save();
     } catch (error) {
       console.error('Error in UserService.createUser:', error); // Imprimir el error en la consola para depuración
@@ -129,92 +129,125 @@ export class UserService {
   ): Promise<boolean> {
     return await bcrypt.compare(plainPassword, hashedPassword);
   }
-
   // Método para programar las notificaciones cada 2 minutos
   private scheduleNotificationsEveryTwoMinutes() {
     nodeCron.schedule('*/2 * * * *', async () => {
       console.log('Consultando la API de horas cada 2 minutos...');
-      await this.scheduleNotificationsBasedOnPetHours();
+      await this.scheduleNotificationsForAllDispensers();
     });
   }
 
-  // Método para programar las notificaciones basado en las horas obtenidas de la API
-  private async scheduleNotificationsBasedOnPetHours() {
+  // Método para programar las notificaciones basado en todos los dispensadores
+  private async scheduleNotificationsForAllDispensers() {
     try {
-      // Hacemos la solicitud GET a tu API para obtener las horas de la mascota
-      const response = await fetch('http://192.168.100.169:3000/pets/last');
+      // 1. Obtener todos los dispensadores
+      const dispenserResponse = await fetch(
+        'http://192.168.100.169:3000/dispenser',
+      );
+      const dispensers = await dispenserResponse.json();
 
-      // Verificamos si la respuesta fue exitosa
-      if (!response.ok) {
-        throw new Error('Failed to fetch pet hours');
-      }
+      // 2. Iterar sobre cada dispensador para programar notificaciones
+      for (const dispenser of dispensers) {
+        const dispenserCode = dispenser.code;
 
-      const petData = await response.json();
-      console.log('Pet data:', petData); // Log para depuración
-
-      // Si no hay horas en la respuesta, lanzamos un error
-      if (!petData.horas || petData.horas.length === 0) {
-        throw new Error('No hours found for pet');
-      }
-
-      // Comprobamos si las horas obtenidas son diferentes de las anteriores
-      const currentHours = petData.horas.join(',');
-
-      // Si las horas han cambiado, reprogramamos los cron jobs
-      if (currentHours !== this.lastScheduledHours) {
-        console.log(
-          'Las horas han cambiado, reprogramando las notificaciones...',
+        // Obtener las horas asociadas al dispensador
+        const petResponse = await fetch(
+          `http://192.168.100.169:3000/pets/last/${dispenserCode}`,
         );
-        this.reScheduleNotifications(petData.horas);
-      } else {
+        const petData = await petResponse.json();
+
+        if (!petData.horas || petData.horas.length === 0) {
+          console.warn(
+            `No se encontraron horas para el dispensador ${dispenserCode}`,
+          );
+          continue;
+        }
+
+        // Mostrar las horas obtenidas en consola
         console.log(
-          'Las horas no han cambiado, manteniendo la programación actual.',
+          `Horas registradas para el dispensador ${dispenserCode}:`,
+          petData.horas,
+        );
+
+        // Obtener los usuarios asociados al dispensador
+        const usersResponse = await fetch('http://192.168.100.169:3000/users');
+        const users = await usersResponse.json();
+        const associatedUsers = users.filter(
+          (user) => user.code === dispenserCode && user.pushToken,
+        );
+
+        // Agrupar y mostrar los pushTokens por código
+        const pushTokens = associatedUsers.map((user) => user.pushToken);
+        console.log(
+          `PushTokens para el dispensador ${dispenserCode}:`,
+          pushTokens,
+        );
+
+        // Programar notificaciones basadas en las horas
+        this.reScheduleNotifications(
+          petData.horas,
+          associatedUsers,
+          dispenserCode,
         );
       }
     } catch (error) {
-      console.error('Error al obtener las horas de la API:', error);
+      console.error(
+        'Error al programar notificaciones para los dispensadores:',
+        error,
+      );
       throw new InternalServerErrorException(
-        'Error al obtener las horas para programar las notificaciones',
+        'Error al programar notificaciones',
       );
     }
   }
 
   // Reprogramar las notificaciones
-  private reScheduleNotifications(hours: string[]) {
-    // Detenemos los cron jobs antiguos
-    this.stopPreviousCronJobs();
+  private reScheduleNotifications(
+    hours: string[],
+    users: any[],
+    dispenserCode: string,
+  ) {
+    console.log(
+      `Programando notificaciones para el dispensador ${dispenserCode}...`,
+    );
 
-    // Iteramos sobre las horas que nos devuelve la API
-    hours.forEach((hora: string) => {
+    // Detener los cron jobs antiguos del dispensador
+    this.stopPreviousCronJobsForDispenser(dispenserCode);
+
+    // Programar nuevas notificaciones
+    hours.forEach((hora) => {
       const cronExpression = this.convertToCronExpression(hora);
 
-      // Programamos un cron job para cada hora en el array "horas"
+      // Programar un cron job para cada hora
       const job = nodeCron.schedule(
         cronExpression,
         () => {
-          console.log(`Enviando notificación a las ${hora}`);
-          this.sendNotificationToAllUsers(); // Enviamos la notificación
+          console.log(
+            `Enviando notificaciones para el dispensador ${dispenserCode} a las ${hora}`,
+          );
+          this.sendNotificationToUsers(users); // Enviar notificación a usuarios asociados
         },
         {
-          timeZone: 'America/Mexico_City', // Usamos la zona horaria de CDMX
+          timeZone: 'America/Mexico_City',
         },
       );
 
-      // Guardamos el cron job para futuras referencias
-      this.petCronJobs[hora] = this.petCronJobs[hora] || [];
-      this.petCronJobs[hora].push(job);
+      // Guardar el cron job
+      this.petCronJobs[dispenserCode] = this.petCronJobs[dispenserCode] || [];
+      this.petCronJobs[dispenserCode].push(job);
     });
 
-    // Actualizamos las horas programadas
-    this.lastScheduledHours = hours.join(',');
+    console.log(
+      `Notificaciones programadas para el dispensador ${dispenserCode}`,
+    );
   }
 
-  // Detener los cron jobs antiguos
-  private stopPreviousCronJobs() {
-    for (const jobArray of Object.values(this.petCronJobs)) {
-      jobArray.forEach((job) => job.stop());
+  // Detener los cron jobs antiguos para un dispensador específico
+  private stopPreviousCronJobsForDispenser(dispenserCode: string) {
+    if (this.petCronJobs[dispenserCode]) {
+      this.petCronJobs[dispenserCode].forEach((job) => job.stop());
+      delete this.petCronJobs[dispenserCode];
     }
-    this.petCronJobs = {}; // Limpiamos los cron jobs previos
   }
 
   // Convertir la hora en formato "HH:MM" a una expresión cron
@@ -223,28 +256,22 @@ export class UserService {
     return `${minute} ${hour} * * *`; // Cron para "minuto hora * * *"
   }
 
-  // Método para enviar una notificación a todos los usuarios
-  private async sendNotificationToAllUsers(): Promise<void> {
-    try {
-      const users = await this.userModel
-        .find({ pushToken: { $ne: '' } })
-        .exec();
-      const message = '¡Tienes una nueva notificación automática!';
-
-      // Enviar la notificación a cada usuario
-      for (const user of users) {
-        const pushToken = user.pushToken;
-        await this.sendPushNotification(pushToken, message);
+  // Enviar notificaciones a los usuarios
+  private async sendNotificationToUsers(users: any[]) {
+    const message = '¡Tienes una nueva notificación automática!';
+    for (const user of users) {
+      try {
+        console.log(
+          `Intentando enviar notificación a ${user.name} con pushToken ${user.pushToken}`,
+        );
+        await this.sendPushNotification(user.pushToken, message);
+      } catch (error) {
+        console.error(`Error al enviar notificación a ${user.name}:`, error);
       }
-    } catch (error) {
-      console.error('Error al enviar las notificaciones:', error);
-      throw new InternalServerErrorException(
-        'Error enviando las notificaciones',
-      );
     }
   }
 
-  // Método para enviar una notificación push
+  // Método para enviar una notificación push (igual que antes)
   private async sendPushNotification(pushToken: string, message: string) {
     const messagePayload = {
       to: pushToken,
