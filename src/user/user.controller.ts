@@ -88,6 +88,12 @@ export class UserController {
     return updatedUser;
   }
 
+  // Obtener los pushTokens de los usuarios de una familia por código
+  @Get('notification/:code')
+  async getPushTokensByCode(@Param('code') code: string): Promise<string[]> {
+    return this.userService.getPushTokensByCode(code);
+  }
+
   // Ruta para enviar una notificación a un usuario por su ID
   // @Put('notification/:id')
   // async sendNotificationToUser(@Param('id') id: string): Promise<string> {
