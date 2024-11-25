@@ -40,6 +40,11 @@ export class PetsController {
     return pet;
   }
 
+  @Get('codes') // Asegúrate de que esta ruta esté antes que @Get(':id')
+  async getCodesAndHoras(): Promise<{ code: string; horas: string[] }[]> {
+    return this.petsService.getCodesAndHoras();
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<Pet> {
     const pet = await this.petsService.findById(id);

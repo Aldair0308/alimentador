@@ -30,6 +30,7 @@ import { PetsModule } from './pets/pets.module';
 import { DistanceModule } from './distance/distance.module';
 import { BreedsModule } from './breeds/breeds.module';
 import { DispenserModule } from './dispenser/dispenser.module';
+import { NotificationService } from './notification/notification.service';
 
 @Module({
   imports: [
@@ -42,6 +43,6 @@ import { DispenserModule } from './dispenser/dispenser.module';
     DispenserModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [NotificationService],
 })
 export class AppModule {}

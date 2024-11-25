@@ -10,13 +10,19 @@ import { CreateUserDto } from './dto/create-user.dto'; // Asegúrate de que la r
 import * as bcrypt from 'bcrypt';
 import * as nodeCron from 'node-cron'; // Importamos node-cron
 
+// Importamos el NotificationService desde el módulo de notificaciones
+import { NotificationService } from '../notification/notification.service';
+
 @Injectable()
 export class UserService {
   // Propiedades para gestionar las horas programadas y los cron jobs
   private petCronJobs: { [hora: string]: nodeCron.ScheduledTask[] } = {};
   private lastScheduledHours: string = ''; // Guardamos las horas originales
 
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    private notificationService: NotificationService, // Inyectamos NotificationService
+  ) {
     // Llamamos al método para obtener las horas y programar los cron jobs cada 2 minutos
     this.scheduleNotificationsEveryTwoMinutes();
   }
@@ -24,8 +30,8 @@ export class UserService {
   // Crear un nuevo usuario
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     try {
-      const { name, email, password } = createUserDto;
-      const newUser = new this.userModel({ name, email, password });
+      const { name, email, password, code } = createUserDto;
+      const newUser = new this.userModel({ name, email, password, code });
       return await newUser.save();
     } catch (error) {
       console.error('Error in UserService.createUser:', error); // Imprimir el error en la consola para depuración
@@ -150,6 +156,41 @@ export class UserService {
     }
   }
 
+  // Método para enviar una notificación a los usuarios de un código específico
+  public async notifyUsersByCode(code: string): Promise<void> {
+    try {
+      const users = await this.userModel
+        .find({ code, pushToken: { $ne: '' } })
+        .exec();
+
+      if (users.length === 0) {
+        throw new NotFoundException(
+          `No se encontraron usuarios con el código ${code}`,
+        );
+      }
+
+      const message = '¡Tienes una nueva notificación automática!';
+
+      // Enviar la notificación a cada usuario utilizando el NotificationService
+      for (const user of users) {
+        const pushToken = user.pushToken;
+        await this.notificationService.sendPushNotification(pushToken, message);
+      }
+
+      console.log(
+        `Notificaciones enviadas a los usuarios con el código ${code} Users ${users}`,
+      );
+    } catch (error) {
+      console.error(
+        `Error al enviar las notificaciones para el código ${code}:`,
+        error,
+      );
+      throw new InternalServerErrorException(
+        `Error enviando las notificaciones para el código ${code}`,
+      );
+    }
+  }
+
   // Método para programar las notificaciones cada 2 minutos
   private scheduleNotificationsEveryTwoMinutes() {
     nodeCron.schedule('*/1 * * * *', async () => {
@@ -245,63 +286,48 @@ export class UserService {
     return `${minute} ${hour} * * *`; // Cron para "minuto hora * * *"
   }
 
-  // Método para enviar una notificación a todos los usuarios
-  private async sendNotificationToAllUsers(): Promise<void> {
+  // Método para enviar una notificación a todos los usuarios o a los usuarios de un código específico
+  public async sendNotificationToAllUsers(code?: string): Promise<void> {
     try {
-      const users = await this.userModel
-        .find({ pushToken: { $ne: '' } })
-        .exec();
+      const query = code
+        ? { code, pushToken: { $ne: '' } }
+        : { pushToken: { $ne: '' } };
+
+      const users = await this.userModel.find(query).exec();
+
+      if (users.length === 0) {
+        throw new NotFoundException(
+          code
+            ? `No se encontraron usuarios con el código ${code}`
+            : 'No se encontraron usuarios con pushToken válido',
+        );
+      }
+
       const message = '¡Tienes una nueva notificación automática!';
 
-      // Enviar la notificación a cada usuario
+      // Enviar la notificación a cada usuario utilizando el NotificationService
       for (const user of users) {
         const pushToken = user.pushToken;
-        await this.sendPushNotification(pushToken, message);
+        await this.notificationService.sendPushNotification(pushToken, message);
       }
-    } catch (error) {
-      console.error('Error al enviar las notificaciones:', error);
-      throw new InternalServerErrorException(
-        'Error enviando las notificaciones',
+
+      console.log(
+        `Notificaciones enviadas a los usuarios ${
+          code ? `con el código ${code}` : 'todos los usuarios'
+        }`,
       );
-    }
-  }
-
-  // Método para enviar una notificación push
-  private async sendPushNotification(pushToken: string, message: string) {
-    const messagePayload = {
-      to: pushToken,
-      sound: 'default',
-      title: 'Notificación Automática',
-      body: message,
-      data: {
-        messageType: 'reminder',
-      },
-      android: {
-        icon: './../../assets/icon.png',
-        color: '#FF231F7C',
-      },
-      ios: {
-        icon: './assets/icon.png',
-      },
-    };
-
-    try {
-      const response = await fetch('https://exp.host/--/api/v2/push/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(messagePayload),
-      });
-
-      const responseJson = await response.json();
-      if (responseJson.data) {
-        console.log('Notificación enviada correctamente');
-      } else {
-        console.warn('Error al enviar notificación');
-      }
     } catch (error) {
-      console.error('Error al enviar la notificación:', error);
+      console.error(
+        `Error al enviar las notificaciones ${
+          code ? `para el código ${code}` : ''
+        }:`,
+        error,
+      );
+      throw new InternalServerErrorException(
+        `Error enviando las notificaciones ${
+          code ? `para el código ${code}` : ''
+        }`,
+      );
     }
   }
 }

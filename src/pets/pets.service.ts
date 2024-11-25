@@ -62,4 +62,30 @@ export class PetsService {
     }
     return lastPet;
   }
+
+  // Obtener códigos únicos y agrupar las horas
+  async getCodesAndHoras(): Promise<{ code: string; horas: string[] }[]> {
+    const pets = await this.petModel.find().select('code horas -_id').exec();
+    const codeMap = new Map<string, string[]>();
+
+    pets.forEach((pet) => {
+      if (codeMap.has(pet.code)) {
+        // Si el código ya existe, agregamos las horas y eliminamos duplicados
+        const existingHoras = codeMap.get(pet.code);
+        const combinedHoras = [...existingHoras, ...pet.horas];
+        codeMap.set(pet.code, Array.from(new Set(combinedHoras)));
+      } else {
+        // Si el código no existe, lo añadimos
+        codeMap.set(pet.code, pet.horas);
+      }
+    });
+
+    // Convertimos el Map a un array de objetos
+    const result = Array.from(codeMap.entries()).map(([code, horas]) => ({
+      code,
+      horas,
+    }));
+
+    return result;
+  }
 }

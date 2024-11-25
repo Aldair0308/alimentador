@@ -7,6 +7,7 @@ import {
   Param,
   Body,
   NotFoundException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './schema/user.schema';
@@ -94,6 +95,48 @@ export class UserController {
     return this.userService.getPushTokensByCode(code);
   }
 
+  @Post('notify/:code')
+  async notifyUsersByCode(
+    @Param('code') code: string,
+  ): Promise<{ message: string }> {
+    try {
+      await this.userService.sendNotificationToAllUsers(code);
+      return {
+        message: `Notificaciones enviadas a los usuarios con el código ${code}`,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else {
+        console.error(
+          `Error en el controlador al enviar notificaciones para el código ${code}:`,
+          error,
+        );
+        throw new InternalServerErrorException(
+          `Error enviando las notificaciones para el código ${code}`,
+        );
+      }
+    }
+  }
+
+  // Si deseas agregar un endpoint para enviar notificaciones a todos los usuarios
+  @Post('notify')
+  async notifyAllUsers(): Promise<{ message: string }> {
+    try {
+      await this.userService.sendNotificationToAllUsers();
+      return {
+        message: 'Notificaciones enviadas a todos los usuarios',
+      };
+    } catch (error) {
+      console.error(
+        'Error en el controlador al enviar notificaciones a todos los usuarios:',
+        error,
+      );
+      throw new InternalServerErrorException(
+        'Error enviando las notificaciones a todos los usuarios',
+      );
+    }
+  }
   // Ruta para enviar una notificación a un usuario por su ID
   // @Put('notification/:id')
   // async sendNotificationToUser(@Param('id') id: string): Promise<string> {
