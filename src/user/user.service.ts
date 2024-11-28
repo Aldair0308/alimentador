@@ -16,14 +16,16 @@ import { NotificationService } from '../notification/notification.service';
 @Injectable()
 export class UserService {
   // Propiedades para gestionar las horas programadas y los cron jobs
-  private petCronJobs: { [hora: string]: nodeCron.ScheduledTask[] } = {};
-  private lastScheduledHours: string = ''; // Guardamos las horas originales
+  private petCronJobs: {
+    [code: string]: { [hora: string]: nodeCron.ScheduledTask };
+  } = {};
+  private lastScheduledHours: { [code: string]: string } = {}; // Guardamos las horas originales por code
 
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private notificationService: NotificationService, // Inyectamos NotificationService
   ) {
-    // Llamamos al método para obtener las horas y programar los cron jobs cada 2 minutos
+    // Llamamos al método para obtener las horas y programar los cron jobs cada 1 minuto
     this.scheduleNotificationsEveryTwoMinutes();
   }
 
@@ -191,10 +193,10 @@ export class UserService {
     }
   }
 
-  // Método para programar las notificaciones cada 2 minutos
+  // Método para programar las notificaciones cada 1 minuto
   private scheduleNotificationsEveryTwoMinutes() {
     nodeCron.schedule('*/1 * * * *', async () => {
-      console.log('Consultando la API de horas cada 2 minutos...');
+      console.log('Consultando la API de horas cada minuto...');
       await this.scheduleNotificationsBasedOnPetHours();
     });
   }
@@ -202,37 +204,39 @@ export class UserService {
   // Método para programar las notificaciones basado en las horas obtenidas de la API
   private async scheduleNotificationsBasedOnPetHours() {
     try {
-      // Hacemos la solicitud GET a tu API para obtener las horas de la mascota
-      const response = await fetch(
-        'http://192.168.100.169:3000/pets/last/3Wa0c71',
-      );
+      // Hacemos la solicitud GET a tu API para obtener los codes y horas de las mascotas
+      const response = await fetch('http://192.168.100.169:3000/pets/codes');
 
       // Verificamos si la respuesta fue exitosa
       if (!response.ok) {
-        throw new Error('Failed to fetch pet hours');
+        throw new Error('Failed to fetch pet codes and hours');
       }
 
-      const petData = await response.json();
-      console.log('Pet data:', petData); // Log para depuración
+      const petsData: { code: string; horas: string[] }[] =
+        await response.json();
+      console.log('Pets data:', petsData); // Log para depuración
 
-      // Si no hay horas en la respuesta, lanzamos un error
-      if (!petData.horas || petData.horas.length === 0) {
-        throw new Error('No hours found for pet');
-      }
+      for (const pet of petsData) {
+        const { code, horas } = pet;
 
-      // Comprobamos si las horas obtenidas son diferentes de las anteriores
-      const currentHours = petData.horas.join(',');
+        if (!horas || horas.length === 0) {
+          console.warn(`No hours found for pet with code ${code}`);
+          continue;
+        }
 
-      // Si las horas han cambiado, reprogramamos los cron jobs
-      if (currentHours !== this.lastScheduledHours) {
-        console.log(
-          'Las horas han cambiado, reprogramando las notificaciones...',
-        );
-        this.reScheduleNotifications(petData.horas);
-      } else {
-        console.log(
-          'Las horas no han cambiado, manteniendo la programación actual.',
-        );
+        const currentHours = horas.join(',');
+
+        // Si las horas han cambiado para este code, reprogramamos los cron jobs
+        if (currentHours !== this.lastScheduledHours[code]) {
+          console.log(
+            `Las horas han cambiado para el code ${code}, reprogramando las notificaciones...`,
+          );
+          this.reScheduleNotifications(code, horas);
+        } else {
+          console.log(
+            `Las horas no han cambiado para el code ${code}, manteniendo la programación actual.`,
+          );
+        }
       }
     } catch (error) {
       console.error('Error al obtener las horas de la API:', error);
@@ -242,21 +246,42 @@ export class UserService {
     }
   }
 
-  // Reprogramar las notificaciones
-  private reScheduleNotifications(hours: string[]) {
-    // Detenemos los cron jobs antiguos
-    this.stopPreviousCronJobs();
+  // Reprogramar las notificaciones para un code específico
+  private reScheduleNotifications(code: string, hours: string[]) {
+    // Detenemos los cron jobs antiguos para este code
+    this.stopPreviousCronJobs(code);
 
-    // Iteramos sobre las horas que nos devuelve la API
+    // Iteramos sobre las horas que nos devuelve la API para este code
     hours.forEach((hora: string) => {
       const cronExpression = this.convertToCronExpression(hora);
 
-      // Programamos un cron job para cada hora en el array "horas"
+      // Programamos un cron job para cada hora
       const job = nodeCron.schedule(
         cronExpression,
-        () => {
-          console.log(`Enviando notificación a las ${hora}`);
-          this.sendNotificationToAllUsers(); // Enviamos la notificación
+        async () => {
+          console.log(
+            `Enviando notificación a las ${hora} para el code ${code}`,
+          );
+          // Hacemos una solicitud POST a /users/notify/:code
+          try {
+            const response = await fetch(
+              `http://192.168.100.169:3000/users/notify/${code}`,
+              {
+                method: 'POST',
+              },
+            );
+
+            if (!response.ok) {
+              throw new Error(`Failed to send notification to code ${code}`);
+            }
+
+            console.log(`Notificación enviada para el code ${code}`);
+          } catch (error) {
+            console.error(
+              `Error al enviar la notificación para el code ${code}:`,
+              error,
+            );
+          }
         },
         {
           timeZone: 'America/Mexico_City', // Usamos la zona horaria de CDMX
@@ -264,20 +289,24 @@ export class UserService {
       );
 
       // Guardamos el cron job para futuras referencias
-      this.petCronJobs[hora] = this.petCronJobs[hora] || [];
-      this.petCronJobs[hora].push(job);
+      if (!this.petCronJobs[code]) {
+        this.petCronJobs[code] = {};
+      }
+      this.petCronJobs[code][hora] = job;
     });
 
-    // Actualizamos las horas programadas
-    this.lastScheduledHours = hours.join(',');
+    // Actualizamos las horas programadas para este code
+    this.lastScheduledHours[code] = hours.join(',');
   }
 
-  // Detener los cron jobs antiguos
-  private stopPreviousCronJobs() {
-    for (const jobArray of Object.values(this.petCronJobs)) {
-      jobArray.forEach((job) => job.stop());
+  // Detener los cron jobs antiguos para un code específico
+  private stopPreviousCronJobs(code: string) {
+    if (this.petCronJobs[code]) {
+      for (const job of Object.values(this.petCronJobs[code])) {
+        job.stop();
+      }
+      delete this.petCronJobs[code];
     }
-    this.petCronJobs = {}; // Limpiamos los cron jobs previos
   }
 
   // Convertir la hora en formato "HH:MM" a una expresión cron
@@ -286,7 +315,6 @@ export class UserService {
     return `${minute} ${hour} * * *`; // Cron para "minuto hora * * *"
   }
 
-  // Método para enviar una notificación a todos los usuarios o a los usuarios de un código específico
   public async sendNotificationToAllUsers(code?: string): Promise<void> {
     try {
       const query = code
@@ -305,28 +333,30 @@ export class UserService {
 
       const message = '¡Tienes una nueva notificación automática!';
 
+      console.log(
+        `Enviando notificaciones a ${users.length} usuarios con el código ${code}`,
+      );
+      console.log('Usuarios encontrados:', users);
+
       // Enviar la notificación a cada usuario utilizando el NotificationService
       for (const user of users) {
         const pushToken = user.pushToken;
+        console.log(
+          `Enviando notificación a ${user.email} con pushToken ${pushToken}`,
+        );
         await this.notificationService.sendPushNotification(pushToken, message);
       }
 
       console.log(
-        `Notificaciones enviadas a los usuarios ${
-          code ? `con el código ${code}` : 'todos los usuarios'
-        }`,
+        `Notificaciones enviadas a los usuarios con el código ${code}`,
       );
     } catch (error) {
       console.error(
-        `Error al enviar las notificaciones ${
-          code ? `para el código ${code}` : ''
-        }:`,
+        `Error al enviar las notificaciones para el código ${code}:`,
         error,
       );
       throw new InternalServerErrorException(
-        `Error enviando las notificaciones ${
-          code ? `para el código ${code}` : ''
-        }`,
+        `Error enviando las notificaciones para el código ${code}`,
       );
     }
   }
