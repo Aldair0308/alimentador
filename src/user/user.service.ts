@@ -205,7 +205,9 @@ export class UserService {
   private async scheduleNotificationsBasedOnPetHours() {
     try {
       // Hacemos la solicitud GET a tu API para obtener los codes y horas de las mascotas
-      const response = await fetch('http://192.168.100.169:3000/pets/codes');
+      const response = await fetch(
+        'https://alimentador-production-15ae.up.railway.app/pets/codes',
+      );
 
       // Verificamos si la respuesta fue exitosa
       if (!response.ok) {
@@ -265,7 +267,7 @@ export class UserService {
           // Hacemos una solicitud POST a /users/notify/:code
           try {
             const response = await fetch(
-              `http://192.168.100.169:3000/users/notify/${code}`,
+              `https://alimentador-production-15ae.up.railway.app/users/notify/${code}`,
               {
                 method: 'POST',
               },

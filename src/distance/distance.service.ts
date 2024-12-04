@@ -112,7 +112,9 @@ export class DistanciaService {
   // Nueva función para realizar el GET y procesar los datos usando fetch
   private async fetchCodesAndCleanUp() {
     try {
-      const response = await fetch('http://192.168.100.169:3000/pets/codes');
+      const response = await fetch(
+        'https://alimentador-production-15ae.up.railway.app/pets/codes',
+      );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
