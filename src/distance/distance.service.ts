@@ -8,20 +8,21 @@ export class DistanciaService {
   constructor(
     @InjectModel(Distancia.name)
     private readonly distanciaModel: Model<Distancia>,
-  ) {}
+  ) {
+    // Inicia el proceso automático al instanciar el servicio
+    this.startAutoCleanup();
+  }
 
   async create(distanciaDto: {
     distancia_cm: number;
-    fecha?: Date; // Agregamos fecha aquí para que TypeScript lo reconozca
+    fecha?: Date;
   }): Promise<Distancia> {
-    // Usar la fecha y hora actual en la zona horaria de CDMX
     const fechaActualCDMX = new Date(
       new Date().toLocaleString('en-US', {
         timeZone: 'America/Mexico_City',
       }),
     );
 
-    // Asignar la fecha actual al objeto distanciaDto
     distanciaDto.fecha = fechaActualCDMX;
 
     const nuevaDistancia = new this.distanciaModel(distanciaDto);
@@ -38,16 +39,14 @@ export class DistanciaService {
 
   async update(
     id: string,
-    distanciaDto: { distancia_cm: number; fecha?: Date }, // Agregamos fecha aquí también
+    distanciaDto: { distancia_cm: number; fecha?: Date },
   ): Promise<Distancia> {
-    // Usar la fecha y hora actual en la zona horaria de CDMX
     const fechaActualCDMX = new Date(
       new Date().toLocaleString('en-US', {
         timeZone: 'America/Mexico_City',
       }),
     );
 
-    // Asignar la fecha actual al objeto distanciaDto
     distanciaDto.fecha = fechaActualCDMX;
 
     return this.distanciaModel
@@ -67,11 +66,11 @@ export class DistanciaService {
       .sort({ fecha: -1 })
       .exec();
 
-    console.log('Última distancia con código:', lastDistancia); // Log para depuración
+    console.log('Última distancia con código:', lastDistancia);
 
     return {
       porcentaje: lastDistancia ? lastDistancia.porcentaje : null,
-      estado: lastDistancia ? lastDistancia.estado : null, // Incluye el estado
+      estado: lastDistancia ? lastDistancia.estado : null,
     };
   }
 
@@ -82,10 +81,56 @@ export class DistanciaService {
       .exec();
 
     if (!lastDistancia) {
-      return null; // No hay registros
+      return null;
     }
 
-    lastDistancia.estado = estado; // Actualiza el estado
-    return lastDistancia.save(); // Guarda el registro actualizado
+    lastDistancia.estado = estado;
+    return lastDistancia.save();
+  }
+
+  // Nueva función para mantener solo los últimos 10 registros por código
+  private async cleanUpOldRecords(codes: string[]) {
+    for (const code of codes) {
+      const registros = await this.distanciaModel
+        .find({ code })
+        .sort({ fecha: -1 }) // Ordena de más reciente a más antiguo
+        .exec();
+
+      if (registros.length > 10) {
+        const idsToRemove = registros
+          .slice(10) // Obtén los registros antiguos
+          .map((reg) => reg._id);
+
+        await this.distanciaModel
+          .deleteMany({ _id: { $in: idsToRemove } })
+          .exec();
+        console.log(`Eliminados registros antiguos del código: ${code}`);
+      }
+    }
+  }
+
+  // Nueva función para realizar el GET y procesar los datos usando fetch
+  private async fetchCodesAndCleanUp() {
+    try {
+      const response = await fetch('http://192.168.100.169:3000/pets/codes');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const codesData: { code: string; horas: string[] }[] =
+        await response.json();
+
+      const codes = codesData.map((item) => item.code);
+      await this.cleanUpOldRecords(codes);
+    } catch (error) {
+      console.error('Error al obtener códigos o limpiar registros:', error);
+    }
+  }
+
+  // Nueva función para iniciar el proceso automático
+  private startAutoCleanup() {
+    setInterval(() => {
+      this.fetchCodesAndCleanUp();
+    }, 30000); // Ejecuta cada 30 segundos
   }
 }
