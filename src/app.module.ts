@@ -35,7 +35,9 @@ import { NotificationService } from './notification/notification.service';
 @Module({
   imports: [
     UserModule,
-    MongooseModule.forRoot('mongodb://localhost:27017/pettech'), // Conexión a la base de datos local
+    MongooseModule.forRoot(
+      'mongodb://mongo:mpdZxINVGCtBOWMMauuVxkKmXtSRoCFi@mongodb.railway.internal:27017',
+    ), // Conexión a la base de datos local
     AuthModule,
     PetsModule,
     DistanceModule,
