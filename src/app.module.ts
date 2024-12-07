@@ -31,6 +31,7 @@ import { DistanceModule } from './distance/distance.module';
 import { BreedsModule } from './breeds/breeds.module';
 import { DispenserModule } from './dispenser/dispenser.module';
 import { NotificationService } from './notification/notification.service';
+import { ProblemModule } from './problem/problem.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { NotificationService } from './notification/notification.service';
     DistanceModule,
     BreedsModule,
     DispenserModule,
+    ProblemModule,
   ],
   controllers: [],
   providers: [NotificationService],
