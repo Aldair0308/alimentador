@@ -13,8 +13,14 @@ export class ProblemService {
   ) {}
 
   async create(createProblemDto: CreateProblemDto): Promise<Problem> {
-    const createdProblem = new this.problemModel(createProblemDto);
-    return createdProblem.save();
+    const fechaActualCDMX = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'America/Mexico_City' }),
+    );
+
+    createProblemDto['fecha'] = fechaActualCDMX;
+
+    const nuevoProblema = new this.problemModel(createProblemDto);
+    return nuevoProblema.save();
   }
 
   async findAll(): Promise<Problem[]> {
