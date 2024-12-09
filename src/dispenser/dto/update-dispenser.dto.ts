@@ -9,4 +9,7 @@ export class UpdateDispenserDto {
 
   @IsString()
   code?: string;
+
+  @IsString()
+  ip?: string;
 }

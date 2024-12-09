@@ -6,6 +6,7 @@ import {
   Param,
   Put,
   Delete,
+  BadRequestException,
 } from '@nestjs/common';
 import { DispenserService } from './dispenser.service';
 import { CreateDispenserDto } from './dto/create-dispenser.dto';
@@ -49,5 +50,16 @@ export class DispenserController {
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<Dispenser> {
     return this.dispenserService.remove(id);
+  }
+
+  @Put('update-ip/:code')
+  async updateIp(
+    @Param('code') code: string,
+    @Body('ip') ip: string,
+  ): Promise<Dispenser> {
+    if (!ip) {
+      throw new BadRequestException('IP address is required');
+    }
+    return this.dispenserService.updateIpByCode(code, ip);
   }
 }

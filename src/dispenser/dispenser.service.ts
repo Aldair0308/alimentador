@@ -59,4 +59,14 @@ export class DispenserService {
     }
     return dispenser;
   }
+
+  async updateIpByCode(code: string, ip: string): Promise<Dispenser> {
+    const updatedDispenser = await this.dispenserModel
+      .findOneAndUpdate({ code }, { ip }, { new: true }) // Actualiza solo el campo IP
+      .exec();
+    if (!updatedDispenser) {
+      throw new NotFoundException(`Dispenser with code ${code} not found`);
+    }
+    return updatedDispenser;
+  }
 }

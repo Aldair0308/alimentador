@@ -19,6 +19,9 @@ export class Dispenser {
 
   @Prop()
   password: string;
+
+  @Prop()
+  ip: string;
 }
 
 export const DispenserSchema = SchemaFactory.createForClass(Dispenser);
