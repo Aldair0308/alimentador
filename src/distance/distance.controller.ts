@@ -14,6 +14,14 @@ import { Distancia } from './schema/distance.schema';
 export class DistanciaController {
   constructor(private readonly distanciaService: DistanciaService) {}
 
+  @Get('signals')
+  getSignals(): string[] {
+    console.log('Fetching signals...');
+    const signals = this.distanciaService.getSignals();
+    console.log('Current signals:', signals);
+    return signals;
+  }
+
   @Post()
   async create(
     @Body() distanciaDto: { distancia_cm: number; fecha?: Date },
@@ -71,12 +79,6 @@ export class DistanciaController {
   addSignal(@Body('signal') signal: string): { message: string } {
     this.distanciaService.addSignal(signal);
     return { message: 'Señal recibida exitosamente' };
-  }
-
-  // Ruta para obtener todas las señales
-  @Get('signals')
-  getSignals(): string[] {
-    return this.distanciaService.getSignals();
   }
 
   // Ruta para limpiar las señales

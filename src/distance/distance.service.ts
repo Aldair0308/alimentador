@@ -96,6 +96,7 @@ export class DistanciaService {
   }
 
   getSignals(): string[] {
+    console.log('getSignals called. Current signals:', this.signals);
     return this.signals;
   }
 
