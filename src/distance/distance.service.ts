@@ -9,10 +9,10 @@ export class DistanciaService {
     @InjectModel(Distancia.name)
     private readonly distanciaModel: Model<Distancia>,
   ) {
-    // Inicia el proceso automático al instanciar el servicio
     this.startAutoCleanup();
   }
 
+  // Funciones públicas
   async create(distanciaDto: {
     distancia_cm: number;
     fecha?: Date;
@@ -88,18 +88,31 @@ export class DistanciaService {
     return lastDistancia.save();
   }
 
-  // Nueva función para mantener solo los últimos 10 registros por código
+  // Almacenamiento temporal en memoria para señales
+  private signals: string[] = []; // Puedes cambiar el tipo si necesitas datos más complejos
+
+  addSignal(signal: string): void {
+    this.signals.push(signal);
+  }
+
+  getSignals(): string[] {
+    return this.signals;
+  }
+
+  clearSignals(): void {
+    this.signals = [];
+  }
+
+  // Funciones privadas
   private async cleanUpOldRecords(codes: string[]) {
     for (const code of codes) {
       const registros = await this.distanciaModel
         .find({ code })
-        .sort({ fecha: -1 }) // Ordena de más reciente a más antiguo
+        .sort({ fecha: -1 })
         .exec();
 
       if (registros.length > 10) {
-        const idsToRemove = registros
-          .slice(10) // Obtén los registros antiguos
-          .map((reg) => reg._id);
+        const idsToRemove = registros.slice(10).map((reg) => reg._id);
 
         await this.distanciaModel
           .deleteMany({ _id: { $in: idsToRemove } })
@@ -109,7 +122,6 @@ export class DistanciaService {
     }
   }
 
-  // Nueva función para realizar el GET y procesar los datos usando fetch
   private async fetchCodesAndCleanUp() {
     try {
       const response = await fetch(
@@ -129,28 +141,9 @@ export class DistanciaService {
     }
   }
 
-  // Nueva función para iniciar el proceso automático
   private startAutoCleanup() {
     setInterval(() => {
       this.fetchCodesAndCleanUp();
-    }, 30000); // Ejecuta cada 30 segundos
-  }
-
-  // Almacenamiento temporal en memoria para señales
-  private signals: string[] = []; // Puedes cambiar el tipo si necesitas datos más complejos
-
-  // Función para agregar una señal
-  addSignal(signal: string): void {
-    this.signals.push(signal);
-  }
-
-  // Función para obtener todas las señales
-  getSignals(): string[] {
-    return this.signals;
-  }
-
-  // Función para limpiar señales
-  clearSignals(): void {
-    this.signals = [];
+    }, 30000);
   }
 }
