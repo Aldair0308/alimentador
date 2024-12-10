@@ -65,4 +65,24 @@ export class DistanciaController {
       message: `Estado del último registro actualizado a "${body.estado}"`,
     };
   }
+
+  // Ruta para agregar una señal
+  @Post('signal')
+  addSignal(@Body('signal') signal: string): { message: string } {
+    this.distanciaService.addSignal(signal);
+    return { message: 'Señal recibida exitosamente' };
+  }
+
+  // Ruta para obtener todas las señales
+  @Get('signals')
+  getSignals(): string[] {
+    return this.distanciaService.getSignals();
+  }
+
+  // Ruta para limpiar las señales
+  @Get('signals/clear')
+  clearSignals(): { message: string } {
+    this.distanciaService.clearSignals();
+    return { message: 'Señales limpiadas exitosamente' };
+  }
 }

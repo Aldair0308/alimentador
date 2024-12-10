@@ -135,4 +135,22 @@ export class DistanciaService {
       this.fetchCodesAndCleanUp();
     }, 30000); // Ejecuta cada 30 segundos
   }
+
+  // Almacenamiento temporal en memoria para señales
+  private signals: string[] = []; // Puedes cambiar el tipo si necesitas datos más complejos
+
+  // Función para agregar una señal
+  addSignal(signal: string): void {
+    this.signals.push(signal);
+  }
+
+  // Función para obtener todas las señales
+  getSignals(): string[] {
+    return this.signals;
+  }
+
+  // Función para limpiar señales
+  clearSignals(): void {
+    this.signals = [];
+  }
 }
