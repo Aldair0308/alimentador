@@ -37,7 +37,7 @@ import { ProblemModule } from './problem/problem.module';
   imports: [
     UserModule,
     MongooseModule.forRoot(
-      'mongodb://mongo:mpdZxINVGCtBOWMMauuVxkKmXtSRoCFi@mongodb.railway.internal:27017',
+      'mongodb://mongo:LGmzFVGagmfZlQyiHIPEfpveiEKaJMna@mongodb-ym0w.railway.internal:27017',
     ), // Conexión a la base de datos local
     AuthModule,
     PetsModule,
